@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Dashboard — ShortsAI</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#080808;--surface:#111;--s2:#161616;--s3:#1c1c1c;
+  --border:#1e1e1e;--border2:#2a2a2a;
+  --orange:#FF6B1A;--gold:#F5A623;--orange-dim:#FF6B1A22;
+  --white:#F0EDE8;--muted:#777;--success:#22C55E;--error:#FF4444;
+  --blue:#0A84FF;--green:#30D158;--purple:#BF5AF2;--red:#FF453A;
+  --font-h:'Bebas Neue',sans-serif;--font-b:'Outfit',sans-serif;
+}
+body{background:var(--bg);color:var(--white);font-family:var(--font-b);min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:.5}
+
+nav{border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;background:var(--bg);position:sticky;top:0;z-index:100}
+.logo{font-family:var(--font-h);font-size:22px;letter-spacing:2px;text-decoration:none;color:var(--white)}
+.logo span{color:var(--orange)}
+.nav-home{color:var(--muted);font-size:13px;text-decoration:none;padding:7px 12px;border:1px solid transparent;border-radius:6px;transition:all .2s}
+.nav-home:hover{color:var(--white);border-color:var(--border2)}
+
+.layout{display:grid;grid-template-columns:460px 1fr;max-width:1400px;margin:0 auto;min-height:calc(100vh - 53px)}
+.sidebar{border-right:1px solid var(--border);padding:24px;overflow-y:auto;max-height:calc(100vh - 53px);position:sticky;top:53px}
+.main{padding:28px;overflow-y:auto}
+
+/* TEMPLATE PICKER */
+.tpl-label{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.tpl-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+.tpl-card{background:var(--s2);border:1px solid var(--border2);border-radius:10px;padding:14px;cursor:pointer;transition:all .2s;text-align:center}
+.tpl-card:hover{border-color:var(--orange);background:var(--s3)}
+.tpl-card.active{border-color:var(--orange);background:var(--orange-dim)}
+.tpl-icon{font-size:28px;margin-bottom:6px;display:block}
+.tpl-name{font-size:12px;font-weight:700;letter-spacing:.5px;color:var(--white)}
+.tpl-desc{font-size:10px;color:var(--muted);margin-top:3px}
+
+/* FORM */
+.section-title{font-family:var(--font-h);font-size:22px;letter-spacing:1px;margin-bottom:4px}
+.section-sub{font-size:12px;color:var(--muted);margin-bottom:16px}
+.form-group{margin-bottom:16px}
+label{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase}
+input[type=text],textarea,select{width:100%;background:var(--s2);border:1px solid var(--border2);color:var(--white);padding:11px 14px;border-radius:8px;font-family:var(--font-b);font-size:13px;outline:none;transition:border-color .2s;resize:vertical}
+input[type=text]:focus,textarea:focus,select:focus{border-color:var(--orange)}
+select option{background:#1a1a1a}
+textarea{min-height:100px;line-height:1.6}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.divider{border:none;border-top:1px solid var(--border);margin:16px 0}
+
+/* Toggle */
+.toggle-row{display:flex;gap:0;border:1px solid var(--border2);border-radius:8px;overflow:hidden;margin-bottom:16px}
+.toggle-btn{flex:1;padding:10px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;background:transparent;border:none;color:var(--muted);letter-spacing:.5px;font-family:var(--font-b)}
+.toggle-btn.active{background:var(--orange);color:#000}
+
+/* Stock toggle */
+.stock-row{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;background:var(--s2);border:1px solid var(--border2);border-radius:8px;margin-bottom:16px}
+.sw{position:relative;display:inline-block;width:42px;height:22px;cursor:pointer}
+.sw input{opacity:0;width:0;height:0}
+.sw-track{position:absolute;inset:0;background:#333;border-radius:100px;transition:.3s;cursor:pointer}
+.sw-knob{position:absolute;left:2px;top:2px;width:18px;height:18px;background:#fff;border-radius:50%;transition:.3s}
+.sw.on .sw-track{background:var(--orange)}
+.sw.on .sw-knob{left:22px}
+
+/* Upload zone */
+.upload-zone{border:1px dashed var(--border2);border-radius:8px;padding:18px;text-align:center;cursor:pointer;transition:border-color .2s;background:var(--s2)}
+.upload-zone:hover{border-color:var(--orange)}
+
+/* Speed slider */
+input[type=range]{width:100%;accent-color:var(--orange);cursor:pointer;margin-top:4px}
+
+/* Generate btn */
+.btn-gen{width:100%;background:var(--orange);color:#000;font-weight:700;font-size:15px;padding:15px;border:none;border-radius:8px;cursor:pointer;font-family:var(--font-b);letter-spacing:.5px;transition:all .25s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px}
+.btn-gen:hover:not(:disabled){background:var(--gold);transform:translateY(-1px)}
+.btn-gen:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+/* MAIN OUTPUT */
+.idle-state{border:1px dashed var(--border2);border-radius:16px;padding:80px 40px;text-align:center;background:var(--surface)}
+.idle-icon{font-size:64px;margin-bottom:20px;opacity:.3}
+.idle-title{font-family:var(--font-h);font-size:36px;color:var(--muted);letter-spacing:1px;margin-bottom:8px}
+.idle-desc{color:#444;font-size:14px}
+
+/* Template preview cards in idle state */
+.preview-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:32px}
+.preview-card{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center}
+.preview-card-icon{font-size:40px;margin-bottom:10px}
+.preview-card-name{font-family:var(--font-h);font-size:18px;letter-spacing:1px;margin-bottom:6px}
+.preview-card-desc{font-size:12px;color:var(--muted);line-height:1.5}
+
+/* Progress */
+.progress-state{display:none;background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding:36px}
+.prog-icon{font-size:48px;text-align:center;margin-bottom:16px;animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+.prog-msg{font-size:16px;text-align:center;margin-bottom:20px}
+.prog-bar-wrap{background:var(--s2);border-radius:100px;height:8px;overflow:hidden;border:1px solid var(--border2)}
+.prog-bar{height:100%;background:linear-gradient(90deg,var(--orange),var(--gold));border-radius:100px;transition:width .5s ease;width:0%}
+.prog-pct{text-align:right;font-size:12px;color:var(--muted);margin-top:5px}
+.steps{display:flex;flex-direction:column;gap:10px;margin-top:28px}
+.step{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:8px;font-size:13px;background:var(--surface);border:1px solid var(--border);color:var(--muted);transition:all .3s}
+.step.done{border-color:#22C55E33;background:#22C55E0a;color:var(--white)}
+.step.active{border-color:var(--orange);background:var(--orange-dim);color:var(--white)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--border2);flex-shrink:0;transition:background .3s}
+.step.done .dot{background:var(--success)}
+.step.active .dot{background:var(--orange);animation:pulse 1s infinite}
+
+/* Result */
+.result-state{display:none;background:var(--surface);border:1px solid #22C55E33;border-radius:16px;padding:28px}
+.video-wrap{background:#000;border-radius:12px;overflow:hidden;border:1px solid var(--border2);margin-bottom:18px;max-width:340px;margin-left:auto;margin-right:auto}
+video{width:100%;display:block}
+.result-actions{display:flex;gap:10px}
+.btn-dl{flex:1;background:var(--orange);color:#000;font-weight:700;font-size:14px;padding:13px;border:none;border-radius:8px;cursor:pointer;font-family:var(--font-b);text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .2s}
+.btn-dl:hover{background:var(--gold)}
+.btn-new{background:var(--s2);color:var(--white);font-weight:600;font-size:14px;padding:13px 16px;border:1px solid var(--border2);border-radius:8px;cursor:pointer;font-family:var(--font-b);transition:all .2s}
+.btn-new:hover{border-color:var(--orange);color:var(--orange)}
+
+/* Error */
+.error-state{display:none;border:1px solid #FF444433;background:#FF44440a;border-radius:12px;padding:28px;text-align:center}
+
+/* Dynamic section show/hide */
+.tpl-section{display:none}.tpl-section.show{display:block}
+
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr}
+  .sidebar{max-height:none;position:static;border-right:none;border-bottom:1px solid var(--border);padding:20px}
+  .main{padding:20px}
+  .tpl-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<nav>
+  <a href="/" class="logo">SHORTS<span>AI</span></a>
+  <a href="/" class="nav-home">← Home</a>
+</nav>
+<div class="layout">
+
+<!-- ─── SIDEBAR ─────────────────────────────────── -->
+<div class="sidebar">
+
+  <!-- TEMPLATE PICKER -->
+  <div class="tpl-label">Choose Video Format</div>
+  <div class="tpl-grid">
+    <div class="tpl-card active" onclick="setTemplate('cinematic')">
+      <span class="tpl-icon">🎬</span>
+      <div class="tpl-name">AI Cinematic</div>
+      <div class="tpl-desc">AI images + voiceover + cuts</div>
+    </div>
+    <div class="tpl-card" onclick="setTemplate('iphone_chat')">
+      <span class="tpl-icon">💬</span>
+      <div class="tpl-name">iPhone Chat</div>
+      <div class="tpl-desc">Animated iMessage drama</div>
+    </div>
+    <div class="tpl-card" onclick="setTemplate('instagram_dm')">
+      <span class="tpl-icon">📱</span>
+      <div class="tpl-name">Instagram DM</div>
+      <div class="tpl-desc">Dark mode IG conversation</div>
+    </div>
+    <div class="tpl-card" onclick="setTemplate('reddit_story')">
+      <span class="tpl-icon">📋</span>
+      <div class="tpl-name">Reddit Story</div>
+      <div class="tpl-desc">AITA / story narration</div>
+    </div>
+    <div class="tpl-card" onclick="setTemplate('quiz')">
+      <span class="tpl-icon">🧠</span>
+      <div class="tpl-name">Quiz / Facts</div>
+      <div class="tpl-desc">Question → reveal answer</div>
+    </div>
+    <div class="tpl-card" onclick="setTemplate('documentary')">
+      <span class="tpl-icon">🎙️</span>
+      <div class="tpl-name">Documentary</div>
+      <div class="tpl-desc">Slow cinematic narration</div>
+    </div>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- ── CINEMATIC FORM ─────────── -->
+  <div id="f-cinematic" class="tpl-section show">
+    <div class="section-title">🎬 AI Cinematic</div>
+    <div class="section-sub">AI images + voiceover + fast cuts</div>
+    <div class="form-group">
+      <label>Video Title</label>
+      <input type="text" id="c-title" placeholder="e.g. 5 Mind-Blowing Space Facts"/>
+    </div>
+    <div class="row2">
+      <div class="form-group">
+        <label>Niche</label>
+        <select id="c-niche">
+          <option value="motivation">🔥 Motivation</option><option value="facts">🧠 Facts</option>
+          <option value="ragebait">😡 Ragebait</option><option value="horror">👻 Horror</option>
+          <option value="drama">🎭 Drama</option><option value="conspiracy">🕵️ Conspiracy</option>
+          <option value="tech">⚡ Tech</option><option value="finance">💰 Finance</option>
+          <option value="crypto">₿ Crypto</option><option value="gaming">🎮 Gaming</option>
+          <option value="fitness">💪 Fitness</option><option value="history">📜 History</option>
+          <option value="science">🔬 Science</option><option value="space" selected>🚀 Space</option>
+          <option value="nature">🌿 Nature</option><option value="animals">🐾 Animals</option>
+          <option value="food">🍕 Food</option><option value="travel">✈️ Travel</option>
+          <option value="psychology">🧬 Psychology</option><option value="celebrity">⭐ Celebrity</option>
+          <option value="comedy">😂 Comedy</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Duration</label>
+        <select id="c-dur"><option value="30">30s</option><option value="60" selected>60s</option></select>
+      </div>
+    </div>
+    <label>Script Mode</label>
+    <div class="toggle-row">
+      <button class="toggle-btn active" id="c-btn-ai" onclick="setCMode('ai')">🤖 AI Writes</button>
+      <button class="toggle-btn" id="c-btn-man" onclick="setCMode('manual')">✍️ I Write</button>
+    </div>
+    <div id="c-ai-panel">
+      <div class="form-group">
+        <label>Topic / Prompt</label>
+        <input type="text" id="c-topic" placeholder="e.g. Why Elon Musk works 100 hours a week"/>
+      </div>
+      <div class="form-group">
+        <label>Tone</label>
+        <select id="c-tone">
+          <option value="energetic">⚡ Energetic</option><option value="dramatic">🎭 Dramatic</option>
+          <option value="mysterious">🌑 Mysterious</option><option value="calm">🌊 Calm</option>
+          <option value="inspirational">✨ Inspirational</option><option value="angry">😡 Angry / Ragebait</option>
+          <option value="shocking">😱 Shocking</option><option value="funny">😂 Funny</option>
+          <option value="storytelling">📖 Storytelling</option><option value="educational">🎓 Educational</option>
+          <option value="conspiracy">🕵️ Conspiracy</option><option value="asmr">🌙 Soft / ASMR</option>
+        </select>
+      </div>
+    </div>
+    <div id="c-man-panel" style="display:none">
+      <div class="form-group">
+        <label>Your Script</label>
+        <textarea id="c-script" placeholder="Write your narration here..." maxlength="2500"></textarea>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="form-group">
+        <label>Video Style</label>
+        <select id="c-style">
+          <option value="fast_cuts" selected>⚡ Fast Cuts</option>
+          <option value="cinematic">🎬 Cinematic</option>
+          <option value="documentary">🎙️ Documentary</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>BG Music</label>
+        <select id="c-music">
+          <option value="ambient" selected>🌊 Ambient</option><option value="dramatic">🎭 Dramatic</option>
+          <option value="upbeat">⚡ Upbeat</option><option value="dark">🌑 Dark</option>
+          <option value="tense">😰 Tense</option><option value="none">🔇 Off</option>
+        </select>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="form-group">
+        <label>Voice</label>
+        <select id="c-voice">
+          <option value="male" selected>👨 Male</option><option value="female">👩 Female</option>
+          <option value="deep">🎙️ Deep</option><option value="energetic">⚡ Energetic</option>
+          <option value="soft">🌸 Soft</option><option value="british">🫖 British</option>
+          <option value="australian">🦘 Australian</option><option value="indian">🇮🇳 Indian</option>
+          <option value="news">📺 News</option><option value="whispery">🌙 Whisper</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Format</label>
+        <select id="c-aspect">
+          <option value="9:16" selected>📱 9:16 Shorts</option>
+          <option value="16:9">🖥️ 16:9 YouTube</option>
+        </select>
+      </div>
+    </div>
+    <div class="stock-row">
+      <div><div style="font-size:13px;font-weight:600">📸 Mix Stock Photos</div><div style="font-size:11px;color:var(--muted)">Unsplash + AI images together</div></div>
+      <div class="sw on" id="sw-stock" onclick="this.classList.toggle('on')">
+        <div class="sw-track"><div class="sw-knob"></div></div>
+      </div>
+    </div>
+    <div class="upload-zone" onclick="document.getElementById('c-imgs').click()">
+      <div style="font-size:22px;margin-bottom:4px">📁</div>
+      <div style="font-size:12px;color:var(--muted)">Add your own images (optional)</div>
+    </div>
+    <input type="file" id="c-imgs" multiple accept="image/*" style="display:none" onchange="uploadImgs(this)"/>
+    <div id="c-upload-status" style="margin-top:8px;font-size:12px;color:var(--success);display:none"></div>
+  </div>
+
+  <!-- ── CHAT FORM (iphone + instagram share same form) ── -->
+  <div id="f-iphone_chat" class="tpl-section">
+    <div class="section-title">💬 iPhone Chat</div>
+    <div class="section-sub">Animated iMessage drama — messages appear one by one</div>
+    <div class="row2">
+      <div class="form-group"><label>Person 1 Name</label><input type="text" id="ch-p1" placeholder="Alex" value="Alex"/></div>
+      <div class="form-group"><label>Person 2 Name</label><input type="text" id="ch-p2" placeholder="Jordan" value="Jordan"/></div>
+    </div>
+    <div class="form-group"><label>Chat Topic / Scenario</label><input type="text" id="ch-topic" placeholder="e.g. Alex finds out Jordan cheated, dramatic confrontation"/></div>
+    <div class="row2">
+      <div class="form-group"><label>Tone</label>
+        <select id="ch-tone">
+          <option value="dramatic">🎭 Dramatic</option><option value="funny">😂 Funny</option>
+          <option value="romantic">💕 Romantic</option><option value="angry">😡 Angry</option>
+          <option value="mysterious">🌑 Mysterious</option><option value="shocking">😱 Shocking</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Duration</label>
+        <select id="ch-dur"><option value="30">30s</option><option value="60" selected>60s</option></select>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="form-group"><label>Voice 1 (Person 1)</label>
+        <select id="ch-v1"><option value="male" selected><option value="male" style="display:none">👨 Male</option><option value="deep">🎙️ Deep Male</option><option value="energetic">⚡ Energetic</option><option value="casual_male">😎 Casual</option><option value="young_male">🧑 Young Male</option><option value="news">📺 News Anchor</option><option value="british_male">🫖 British Male</option><option value="australian_male">🦘 Australian</option><option value="indian_male">🇮🇳 Indian Male</option><option value="female">👩 Female</option><option value="soft">🌸 Soft</option><option value="warm_female">🤗 Warm</option><option value="young_female">👧 Young Female</option><option value="whispery">🌙 Whisper</option><option value="narrator_female">🎤 Narrator</option><option value="british_female">🫖 British Female</option><option value="australian_female">🦘 Aus Female</option><option value="indian_female">🇮🇳 Indian Female</option></select>
+      </div>
+      <div class="form-group"><label>Voice 2 (Person 2)</label>
+        <select id="ch-v2"><option value="female" selected><option value="male">👨 Male</option><option value="deep">🎙️ Deep Male</option><option value="energetic">⚡ Energetic</option><option value="casual_male">😎 Casual</option><option value="young_male">🧑 Young Male</option><option value="news">📺 News Anchor</option><option value="british_male">🫖 British Male</option><option value="australian_male">🦘 Australian</option><option value="indian_male">🇮🇳 Indian Male</option><option value="female" style="display:none">👩 Female</option><option value="soft">🌸 Soft</option><option value="warm_female">🤗 Warm</option><option value="young_female">👧 Young Female</option><option value="whispery">🌙 Whisper</option><option value="narrator_female">🎤 Narrator</option><option value="british_female">🫖 British Female</option><option value="australian_female">🦘 Aus Female</option><option value="indian_female">🇮🇳 Indian Female</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>Background Music</label>
+      <select id="ch-music"><option value="dramatic">🎭 Dramatic</option><option value="tense">😰 Tense</option><option value="ambient" selected>🌊 Ambient</option><option value="upbeat">⚡ Upbeat</option><option value="none">🔇 Off</option></select>
+    </div>
+  </div>
+
+  <!-- ── INSTAGRAM DM ── -->
+  <div id="f-instagram_dm" class="tpl-section">
+    <div class="section-title">📱 Instagram DM</div>
+    <div class="section-sub">Dark mode Instagram DM conversation</div>
+    <div class="row2">
+      <div class="form-group"><label>Person 1</label><input type="text" id="ig-p1" placeholder="@username1" value="@alex"/></div>
+      <div class="form-group"><label>Person 2</label><input type="text" id="ig-p2" placeholder="@username2" value="@jordan"/></div>
+    </div>
+    <div class="form-group"><label>DM Topic / Drama</label><input type="text" id="ig-topic" placeholder="e.g. Influencer gets exposed, dramatic DM exchange"/></div>
+    <div class="row2">
+      <div class="form-group"><label>Tone</label>
+        <select id="ig-tone"><option value="dramatic">🎭 Dramatic</option><option value="shocking">😱 Shocking</option><option value="funny">😂 Funny</option><option value="angry">😡 Angry</option></select>
+      </div>
+      <div class="form-group"><label>Duration</label>
+        <select id="ig-dur"><option value="30">30s</option><option value="60" selected>60s</option></select>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="form-group"><label>Voice 1</label><select id="ig-v1"><option value="male" selected><option value="male">👨 Male</option><option value="deep">🎙️ Deep Male</option><option value="energetic">⚡ Energetic</option><option value="casual_male">😎 Casual</option><option value="young_male">🧑 Young Male</option><option value="news">📺 News Anchor</option><option value="british_male">🫖 British Male</option><option value="australian_male">🦘 Australian</option><option value="indian_male">🇮🇳 Indian Male</option><option value="female">👩 Female</option><option value="soft">🌸 Soft</option><option value="warm_female">🤗 Warm</option><option value="young_female">👧 Young Female</option><option value="whispery">🌙 Whisper</option><option value="narrator_female">🎤 Narrator</option><option value="british_female">🫖 British Female</option><option value="australian_female">🦘 Aus Female</option><option value="indian_female">🇮🇳 Indian Female</option></select></div>
+      <div class="form-group"><label>Voice 2</label><select id="ig-v2"><option value="female" selected><option value="male">👨 Male</option><option value="deep">🎙️ Deep Male</option><option value="energetic">⚡ Energetic</option><option value="casual_male">😎 Casual</option><option value="young_male">🧑 Young Male</option><option value="news">📺 News Anchor</option><option value="british_male">🫖 British Male</option><option value="australian_male">🦘 Australian</option><option value="indian_male">🇮🇳 Indian Male</option><option value="female">👩 Female</option><option value="soft">🌸 Soft</option><option value="warm_female">🤗 Warm</option><option value="young_female">👧 Young Female</option><option value="whispery">🌙 Whisper</option><option value="narrator_female">🎤 Narrator</option><option value="british_female">🫖 British Female</option><option value="australian_female">🦘 Aus Female</option><option value="indian_female">🇮🇳 Indian Female</option></select></div>
+    </div>
+    <div class="form-group"><label>Background Music</label>
+      <select id="ig-music"><option value="dramatic">🎭 Dramatic</option><option value="tense" selected>😰 Tense</option><option value="ambient">🌊 Ambient</option><option value="none">🔇 Off</option></select>
+    </div>
+  </div>
+
+  <!-- ── REDDIT STORY ── -->
+  <div id="f-reddit_story" class="tpl-section">
+    <div class="section-title">📋 Reddit Story</div>
+    <div class="section-sub">Reddit post card → full story narration</div>
+    <div class="row2">
+      <div class="form-group"><label>Subreddit</label>
+        <select id="r-sub">
+          <option value="AITA" selected>r/AITA</option><option value="tifu">r/TIFU</option>
+          <option value="relationship_advice">r/RelationshipAdvice</option><option value="nosleep">r/NoSleep</option>
+          <option value="confession">r/Confession</option><option value="TrueOffMyChest">r/TrueOffMyChest</option>
+          <option value="AmItheAsshole">r/AmItheAsshole</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Your Username</label><input type="text" id="r-user" placeholder="throwaway_user" value="throwaway_user"/></div>
+    </div>
+    <div class="form-group"><label>Story Topic</label><input type="text" id="r-topic" placeholder="e.g. I found out my best friend of 10 years was lying to me"/></div>
+    <div class="row2">
+      <div class="form-group"><label>Voice</label>
+        <select id="r-voice"><option value="male" selected>👨 Male</option><option value="female">👩 Female</option><option value="deep">🎙️ Deep</option><option value="news">📺 News</option></select>
+      </div>
+      <div class="form-group"><label>Duration</label>
+        <select id="r-dur"><option value="45">45s</option><option value="60" selected>60s</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>Background Music</label>
+      <select id="r-music"><option value="dramatic" selected>🎭 Dramatic</option><option value="tense">😰 Tense</option><option value="ambient">🌊 Ambient</option><option value="dark">🌑 Dark</option><option value="none">🔇 Off</option></select>
+    </div>
+  </div>
+
+  <!-- ── QUIZ ── -->
+  <div id="f-quiz" class="tpl-section">
+    <div class="section-title">🧠 Quiz / Facts</div>
+    <div class="section-sub">Question appears → suspense pause → answer revealed</div>
+    <div class="form-group"><label>Quiz Topic</label><input type="text" id="q-topic" placeholder="e.g. Shocking facts about space that NASA doesn't talk about"/></div>
+    <div class="row2">
+      <div class="form-group"><label>Niche</label>
+        <select id="q-niche">
+          <option value="space" selected>🚀 Space</option><option value="facts">🧠 Facts</option>
+          <option value="history">📜 History</option><option value="science">🔬 Science</option>
+          <option value="psychology">🧬 Psychology</option><option value="tech">⚡ Tech</option>
+          <option value="animals">🐾 Animals</option><option value="food">🍕 Food</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Questions</label>
+        <select id="q-num"><option value="3">3 Q&As</option><option value="5" selected>5 Q&As</option><option value="7">7 Q&As</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>Voice</label>
+      <select id="q-voice"><option value="energetic" selected>⚡ Energetic</option><option value="male">👨 Male</option><option value="female">👩 Female</option><option value="deep">🎙️ Deep</option><option value="news">📺 News</option></select>
+    </div>
+    <div class="form-group"><label>Background Music</label>
+      <select id="q-music"><option value="tense" selected>😰 Tense</option><option value="dramatic">🎭 Dramatic</option><option value="upbeat">⚡ Upbeat</option><option value="none">🔇 Off</option></select>
+    </div>
+  </div>
+
+  <!-- ── DOCUMENTARY ── -->
+  <div id="f-documentary" class="tpl-section">
+    <div class="section-title">🎙️ Documentary</div>
+    <div class="section-sub">Slow cinematic cuts, deep voice, atmospheric</div>
+    <div class="form-group"><label>Documentary Title</label><input type="text" id="d-title" placeholder="e.g. The Dark Side of Silicon Valley"/></div>
+    <div class="form-group"><label>Topic</label><input type="text" id="d-topic" placeholder="e.g. How Mark Zuckerberg built a surveillance empire"/></div>
+    <div class="row2">
+      <div class="form-group"><label>Niche</label>
+        <select id="d-niche">
+          <option value="history" selected>📜 History</option><option value="conspiracy">🕵️ Conspiracy</option>
+          <option value="tech">⚡ Tech</option><option value="psychology">🧬 Psychology</option>
+          <option value="science">🔬 Science</option><option value="finance">💰 Finance</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Duration</label>
+        <select id="d-dur"><option value="60" selected>60s</option></select>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="form-group"><label>Voice</label>
+        <select id="d-voice"><option value="deep" selected>🎙️ Deep Male</option><option value="news">📺 News Anchor</option><option value="british">🫖 British</option><option value="male">👨 Male</option></select>
+      </div>
+      <div class="form-group"><label>Music</label>
+        <select id="d-music"><option value="dramatic" selected>🎭 Dramatic</option><option value="dark">🌑 Dark</option><option value="ambient">🌊 Ambient</option><option value="tense">😰 Tense</option></select>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SHARED SPEED SLIDER ── -->
+  <hr class="divider"/>
+  <div class="form-group">
+    <label>Voice Speed — <span id="speed-label">1.0× Normal</span></label>
+    <input type="range" id="voice-speed" min="0.5" max="1.8" step="0.1" value="1.0" oninput="updateSpeed()"/>
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:3px">
+      <span>0.5×</span><span>1.0× Normal</span><span>1.8×</span>
+    </div>
+  </div>
+
+  <button class="btn-gen" id="gen-btn" onclick="generate()">
+    <span id="gen-icon">🎬</span> <span id="gen-label">Generate Video</span>
+  </button>
+</div>
+
+<!-- ─── MAIN ───────────────────────────────────────── -->
+<div class="main">
+
+  <!-- Idle -->
+  <div class="idle-state" id="idle-state">
+    <div class="idle-icon">🎬</div>
+    <div class="idle-title">Ready to Create</div>
+    <div class="idle-desc">Pick a format on the left and generate your video</div>
+    <div class="preview-grid">
+      <div class="preview-card"><div class="preview-card-icon">🎬</div><div class="preview-card-name">AI Cinematic</div><div class="preview-card-desc">Fast cuts, AI-generated scenes, epic voiceover. The classic viral format.</div></div>
+      <div class="preview-card"><div class="preview-card-icon">💬</div><div class="preview-card-name">iPhone Chat</div><div class="preview-card-desc">Two people texting. Drama unfolds message by message. Huge engagement.</div></div>
+      <div class="preview-card"><div class="preview-card-icon">📋</div><div class="preview-card-name">Reddit Story</div><div class="preview-card-desc">AITA post + full story narration. Most viral format on TikTok right now.</div></div>
+      <div class="preview-card"><div class="preview-card-icon">🧠</div><div class="preview-card-name">Quiz / Facts</div><div class="preview-card-desc">Question → suspense → answer. Perfect for facts channels. Great retention.</div></div>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-state" id="progress-state">
+    <div class="prog-icon" id="prog-icon">⚙️</div>
+    <div class="prog-msg" id="prog-msg">Starting...</div>
+    <div class="prog-bar-wrap"><div class="prog-bar" id="prog-bar"></div></div>
+    <div class="prog-pct" id="prog-pct">0%</div>
+    <div class="steps" id="steps"></div>
+  </div>
+
+  <!-- Result -->
+  <div class="result-state" id="result-state">
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:32px;margin-bottom:6px">🎉</div>
+      <div style="font-family:var(--font-h);font-size:26px;letter-spacing:1px;color:var(--success)">VIDEO READY!</div>
+    </div>
+    <div class="video-wrap"><video id="vid" controls playsinline preload="metadata"></video></div>
+    <div class="result-actions">
+      <a id="dl-btn" class="btn-dl" href="#" download="shortsai_video.mp4">⬇️ Download MP4</a>
+      <button class="btn-new" onclick="resetUI()">+ New Video</button>
+    </div>
+    <div style="margin-top:14px;padding:14px;background:var(--s2);border-radius:8px;font-size:12px;color:var(--muted);line-height:1.6">
+      💡 <strong style="color:var(--white)">Post Tips:</strong> Add trending audio in CapCut. Best times: 7–9 PM. Use 3–5 hashtags. Post daily for algorithm boost.
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div class="error-state" id="error-state">
+    <div style="font-size:36px;margin-bottom:10px">⚠️</div>
+    <div id="error-msg" style="color:#FF6666;font-size:14px;line-height:1.6"></div>
+    <button onclick="resetUI()" style="margin-top:18px;background:var(--s2);color:var(--white);border:1px solid var(--border2);padding:10px 22px;border-radius:8px;cursor:pointer;font-family:var(--font-b);font-size:13px">Try Again</button>
+  </div>
+</div>
+</div>
+
+<script>
+const SESSION = Math.random().toString(36).substr(2,12);
+let currentTemplate = 'cinematic';
+let currentJobId = null;
+let pollInterval = null;
+let cScriptMode = 'ai';
+
+const TEMPLATE_STEPS = {
+  cinematic: ['✍️ Writing viral script','🎨 Generating AI images','📸 Fetching stock photos','🎙️ Voiceover','🎵 Background music','🎬 Building clips','🔗 Stitching','🎧 Final mix'],
+  iphone_chat: ['✍️ Writing chat script','🎙️ Recording voices','📱 Rendering frames','🔗 Stitching chat','🎵 Adding music'],
+  instagram_dm: ['✍️ Writing DM script','🎙️ Recording voices','📱 Rendering DM frames','🔗 Stitching','🎵 Adding music'],
+  reddit_story: ['📋 Writing Reddit story','🎨 Rendering Reddit card','🎙️ Narration','🎬 Building story frames','🎧 Final mix'],
+  quiz: ['🧠 Generating questions','🎙️ Recording answers','🎨 Rendering quiz cards','🔗 Stitching','🎵 Adding music'],
+  documentary: ['✍️ Writing script','🎨 AI images','🎙️ Deep voiceover','🎬 Cinematic cuts','🎧 Final mix'],
+};
+const TEMPLATE_ICONS = {cinematic:'🎬',iphone_chat:'💬',instagram_dm:'📱',reddit_story:'📋',quiz:'🧠',documentary:'🎙️'};
+
+function setTemplate(t) {
+  currentTemplate = t;
+  document.querySelectorAll('.tpl-card').forEach(c=>c.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  document.querySelectorAll('.tpl-section').forEach(s=>s.classList.remove('show'));
+  const section = document.getElementById('f-'+t) || document.getElementById('f-cinematic');
+  if (section) section.classList.add('show');
+  document.getElementById('gen-icon').textContent = TEMPLATE_ICONS[t]||'🎬';
+  document.getElementById('gen-label').textContent = `Generate ${t.replace(/_/g,' ').replace(/\b\w/g,l=>l.toUpperCase())} Video`;
+}
+
+function setCMode(m) {
+  cScriptMode = m;
+  document.getElementById('c-btn-ai').classList.toggle('active', m==='ai');
+  document.getElementById('c-btn-man').classList.toggle('active', m==='manual');
+  document.getElementById('c-ai-panel').style.display = m==='ai'?'block':'none';
+  document.getElementById('c-man-panel').style.display = m==='manual'?'block':'none';
+}
+
+function updateSpeed() {
+  const v = parseFloat(document.getElementById('voice-speed').value);
+  let l = v+'×';
+  if (v<0.8) l+=' Slow'; else if (v<=1.1) l+=' Normal'; else if (v<=1.4) l+=' Fast'; else l+=' Very Fast';
+  document.getElementById('speed-label').textContent = l;
+}
+
+async function uploadImgs(input) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+  const st = document.getElementById('c-upload-status');
+  st.style.display='block'; st.textContent='⏳ Uploading...'; st.style.color='var(--muted)';
+  const form = new FormData();
+  files.forEach(f=>form.append('files',f));
+  try {
+    const r = await fetch('/api/upload-images/'+SESSION,{method:'POST',body:form});
+    const d = await r.json();
+    st.style.color='var(--success)'; st.textContent=`✅ ${d.uploaded} image(s) uploaded!`;
+  } catch(e) { st.style.color='var(--error)'; st.textContent='❌ Upload failed'; }
+}
+
+function buildPayload() {
+  const speed = parseFloat(document.getElementById('voice-speed').value);
+  const t = currentTemplate;
+  let p = {template:t, voice_speed:speed, session_id:SESSION};
+
+  if (t==='cinematic'||t==='documentary') {
+    const src = t==='cinematic';
+    p.title = src ? document.getElementById('c-title').value : document.getElementById('d-title').value;
+    p.topic = src ? document.getElementById('c-topic').value : document.getElementById('d-topic').value;
+    p.niche = src ? document.getElementById('c-niche').value : document.getElementById('d-niche').value;
+    p.tone  = src ? document.getElementById('c-tone').value  : 'dramatic';
+    p.voice = src ? document.getElementById('c-voice').value : document.getElementById('d-voice').value;
+    p.duration = parseInt(src ? document.getElementById('c-dur').value : document.getElementById('d-dur').value);
+    p.bg_music = src ? document.getElementById('c-music').value : document.getElementById('d-music').value;
+    p.video_style = t==='documentary' ? 'documentary' : document.getElementById('c-style').value;
+    p.aspect_ratio = src ? document.getElementById('c-aspect').value : '9:16';
+    p.use_stock = document.getElementById('sw-stock')?.classList.contains('on') || false;
+    if (src) {
+      p.script_mode = cScriptMode;
+      if (cScriptMode==='manual') p.script_text = document.getElementById('c-script').value;
+    } else { p.script_mode='ai'; }
+  } else if (t==='iphone_chat') {
+    p.person1_name = document.getElementById('ch-p1').value || 'Alex';
+    p.person2_name = document.getElementById('ch-p2').value || 'Jordan';
+    p.topic = document.getElementById('ch-topic').value;
+    p.tone  = document.getElementById('ch-tone').value;
+    p.voice = document.getElementById('ch-v1').value;
+    p.voice2= document.getElementById('ch-v2').value;
+    p.duration = parseInt(document.getElementById('ch-dur').value);
+    p.bg_music = document.getElementById('ch-music').value;
+    p.aspect_ratio='9:16'; p.script_mode='ai';
+  } else if (t==='instagram_dm') {
+    p.person1_name = document.getElementById('ig-p1').value || '@alex';
+    p.person2_name = document.getElementById('ig-p2').value || '@jordan';
+    p.topic = document.getElementById('ig-topic').value;
+    p.tone  = document.getElementById('ig-tone').value;
+    p.voice = document.getElementById('ig-v1').value;
+    p.voice2= document.getElementById('ig-v2').value;
+    p.duration = parseInt(document.getElementById('ig-dur').value);
+    p.bg_music = document.getElementById('ig-music').value;
+    p.aspect_ratio='9:16'; p.script_mode='ai';
+  } else if (t==='reddit_story') {
+    p.topic = document.getElementById('r-topic').value;
+    p.subreddit = document.getElementById('r-sub').value;
+    p.reddit_username = document.getElementById('r-user').value || 'throwaway_user';
+    p.voice = document.getElementById('r-voice').value;
+    p.duration = parseInt(document.getElementById('r-dur').value);
+    p.bg_music = document.getElementById('r-music').value;
+    p.aspect_ratio='9:16'; p.script_mode='ai'; p.niche='drama';
+  } else if (t==='quiz') {
+    p.topic = document.getElementById('q-topic').value;
+    p.niche = document.getElementById('q-niche').value;
+    p.voice = document.getElementById('q-voice').value;
+    p.bg_music = document.getElementById('q-music').value;
+    p.num_questions = parseInt(document.getElementById('q-num').value);
+    p.aspect_ratio='9:16'; p.script_mode='ai';
+  }
+  return p;
+}
+
+function validate(p) {
+  if (!p.topic && !p.script_text) { alert('Please enter a topic or script.'); return false; }
+  return true;
+}
+
+async function generate() {
+  const payload = buildPayload();
+  if (!validate(payload)) return;
+  document.getElementById('gen-btn').disabled=true;
+  buildSteps(); showPanel('progress');
+  document.getElementById('prog-bar').style.width='0%';
+  document.getElementById('prog-pct').textContent='0%';
+  document.getElementById('prog-msg').textContent='⏳ Starting...';
+  try {
+    const r = await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const d = await r.json();
+    currentJobId = d.job_id;
+    poll();
+  } catch(e) { showError('Failed to start: '+e.message); }
+}
+
+function buildSteps() {
+  const steps = TEMPLATE_STEPS[currentTemplate] || TEMPLATE_STEPS.cinematic;
+  const el = document.getElementById('steps');
+  el.innerHTML = steps.map((s,i)=>`<div class="step" id="step-${i}"><div class="dot"></div>${s}</div>`).join('');
+}
+
+function updateSteps(pct, steps) {
+  const total=steps.length;
+  steps.forEach((_,i)=>{
+    const el=document.getElementById(`step-${i}`);
+    if (!el) return;
+    const threshold=(i+1)/total*100;
+    const prev=i/total*100;
+    el.classList.remove('done','active');
+    if (pct>=threshold) el.classList.add('done');
+    else if (pct>=prev) el.classList.add('active');
+  });
+}
+
+function poll() {
+  if (pollInterval) clearInterval(pollInterval);
+  pollInterval = setInterval(async ()=>{
+    if (!currentJobId) return;
+    try {
+      const r = await fetch('/api/status/'+currentJobId);
+      const d = await r.json();
+      const pct=d.progress||0;
+      const steps=TEMPLATE_STEPS[currentTemplate]||TEMPLATE_STEPS.cinematic;
+      document.getElementById('prog-bar').style.width=pct+'%';
+      document.getElementById('prog-pct').textContent=pct+'%';
+      document.getElementById('prog-msg').textContent=d.message||'Processing...';
+      const icons=['⚙️','✍️','🎨','📸','🎙️','🎵','🎬','🔗','🎧','✅'];
+      document.getElementById('prog-icon').textContent=icons[Math.floor(pct/12.5)]||'⚙️';
+      updateSteps(pct,steps);
+      if (d.status==='done') { clearInterval(pollInterval); showResult(); }
+      else if (d.status==='error') { clearInterval(pollInterval); showError(d.message||'Unknown error'); }
+    } catch(e) { console.error(e); }
+  },2000);
+}
+
+function showPanel(name) {
+  ['idle','progress','result','error'].forEach(p=>{
+    const el=document.getElementById(p+'-state');
+    el.style.display=(p===name?'block':'none');
+  });
+}
+function showResult() {
+  showPanel('result');
+  const src='/api/download/'+currentJobId;
+  document.getElementById('vid').src=src;
+  document.getElementById('dl-btn').href=src;
+  document.getElementById('gen-btn').disabled=false;
+}
+function showError(msg) {
+  showPanel('error');
+  document.getElementById('error-msg').textContent=msg;
+  document.getElementById('gen-btn').disabled=false;
+}
+function resetUI() {
+  if (pollInterval) clearInterval(pollInterval);
+  currentJobId=null; showPanel('idle');
+  document.getElementById('gen-btn').disabled=false;
+}
+</script>
+</body>
+</html>
