@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>ShortsAI — AI Faceless Video Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#080808;
+  --surface:#111111;
+  --border:#1e1e1e;
+  --orange:#FF6B1A;
+  --orange-dim:#FF6B1A33;
+  --gold:#F5A623;
+  --white:#F0EDE8;
+  --muted:#888;
+  --font-head:'Bebas Neue',sans-serif;
+  --font-body:'Outfit',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--white);font-family:var(--font-body);overflow-x:hidden;min-height:100vh}
+
+/* Grain overlay */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:9999;opacity:.5
+}
+
+/* NAV */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:20px 48px;
+  background:linear-gradient(180deg,rgba(8,8,8,.95) 0%,transparent 100%);
+  backdrop-filter:blur(12px);
+}
+.logo{font-family:var(--font-head);font-size:28px;letter-spacing:2px;color:var(--white)}
+.logo span{color:var(--orange)}
+.nav-btn{
+  background:var(--orange);color:#000;font-family:var(--font-body);
+  font-weight:600;font-size:14px;padding:10px 24px;border:none;
+  border-radius:6px;cursor:pointer;letter-spacing:.5px;
+  text-decoration:none;transition:all .2s;
+}
+.nav-btn:hover{background:var(--gold);transform:translateY(-1px)}
+
+/* HERO */
+.hero{
+  min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:120px 24px 80px;text-align:center;position:relative;
+  background:radial-gradient(ellipse 80% 60% at 50% 0%, #FF6B1A18 0%, transparent 70%);
+}
+.hero-tag{
+  display:inline-flex;align-items:center;gap:8px;
+  background:#1a1a1a;border:1px solid #2a2a2a;
+  padding:6px 16px;border-radius:100px;font-size:13px;
+  color:var(--muted);margin-bottom:32px;letter-spacing:.5px;
+}
+.hero-tag span{color:var(--orange)}
+.hero h1{
+  font-family:var(--font-head);font-size:clamp(72px,12vw,140px);
+  line-height:.92;letter-spacing:2px;margin-bottom:24px;
+  text-transform:uppercase;
+}
+.hero h1 .line2{
+  background:linear-gradient(90deg,var(--orange),var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.hero p{
+  max-width:560px;font-size:18px;line-height:1.6;
+  color:var(--muted);margin-bottom:48px;font-weight:300;
+}
+.hero-cta{
+  display:flex;gap:16px;align-items:center;flex-wrap:wrap;justify-content:center
+}
+.btn-primary{
+  background:var(--orange);color:#000;font-weight:700;
+  font-size:16px;padding:16px 40px;border:none;border-radius:8px;
+  cursor:pointer;letter-spacing:.5px;text-decoration:none;
+  transition:all .25s;display:inline-block;font-family:var(--font-body)
+}
+.btn-primary:hover{background:var(--gold);transform:translateY(-2px);box-shadow:0 12px 40px #FF6B1A44}
+.btn-ghost{
+  color:var(--muted);font-size:15px;text-decoration:none;
+  display:flex;align-items:center;gap:8px;transition:color .2s;font-weight:400
+}
+.btn-ghost:hover{color:var(--white)}
+
+/* STATS BAR */
+.stats-bar{
+  display:flex;gap:0;border:1px solid var(--border);
+  border-radius:12px;margin:80px auto 0;max-width:600px;
+  overflow:hidden;background:var(--surface)
+}
+.stat{flex:1;padding:24px;text-align:center;border-right:1px solid var(--border)}
+.stat:last-child{border-right:none}
+.stat-num{font-family:var(--font-head);font-size:36px;color:var(--orange)}
+.stat-label{font-size:12px;color:var(--muted);margin-top:4px;letter-spacing:.5px;text-transform:uppercase}
+
+/* FEATURES */
+.section{padding:100px 48px;max-width:1200px;margin:0 auto}
+.section-tag{
+  font-size:12px;letter-spacing:3px;text-transform:uppercase;
+  color:var(--orange);margin-bottom:16px;font-weight:600
+}
+.section-title{
+  font-family:var(--font-head);font-size:clamp(40px,6vw,72px);
+  line-height:1;margin-bottom:16px;text-transform:uppercase
+}
+.section-sub{color:var(--muted);font-size:17px;max-width:480px;line-height:1.6}
+
+.features-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:2px;margin-top:64px;
+}
+.feature-card{
+  background:var(--surface);padding:40px;position:relative;overflow:hidden;
+  transition:background .3s;cursor:default;
+}
+.feature-card::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,var(--orange-dim) 0%,transparent 60%);
+  opacity:0;transition:opacity .3s
+}
+.feature-card:hover::before{opacity:1}
+.feature-card:hover{background:#151515}
+.feat-icon{font-size:36px;margin-bottom:20px;display:block}
+.feat-title{font-family:var(--font-head);font-size:26px;letter-spacing:1px;margin-bottom:10px}
+.feat-desc{color:var(--muted);font-size:15px;line-height:1.65}
+
+/* HOW IT WORKS */
+.how-section{
+  padding:100px 48px;
+  background:linear-gradient(180deg,var(--bg) 0%, #0e0e0e 100%);
+}
+.how-inner{max-width:1000px;margin:0 auto}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:40px;margin-top:72px}
+.step{position:relative;text-align:center}
+.step-num{
+  width:64px;height:64px;border-radius:50%;
+  border:1px solid var(--border);display:flex;align-items:center;justify-content:center;
+  margin:0 auto 24px;font-family:var(--font-head);font-size:28px;color:var(--orange);
+  background:var(--surface);position:relative;
+}
+.step-num::after{
+  content:'';position:absolute;right:-40px;top:50%;transform:translateY(-50%);
+  width:40px;height:1px;background:var(--border);
+}
+.step:last-child .step-num::after{display:none}
+.step-title{font-family:var(--font-head);font-size:22px;letter-spacing:1px;margin-bottom:10px}
+.step-desc{color:var(--muted);font-size:14px;line-height:1.7}
+
+/* NICHES */
+.niches-row{
+  display:flex;gap:10px;flex-wrap:wrap;margin-top:64px;
+}
+.niche-pill{
+  padding:10px 20px;border:1px solid var(--border);border-radius:100px;
+  font-size:14px;color:var(--muted);letter-spacing:.5px;
+  transition:all .2s;cursor:default;background:var(--surface)
+}
+.niche-pill:hover{border-color:var(--orange);color:var(--orange)}
+
+/* FOOTER */
+footer{
+  border-top:1px solid var(--border);padding:40px 48px;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:16px;
+}
+.foot-logo{font-family:var(--font-head);font-size:22px;letter-spacing:2px}
+.foot-logo span{color:var(--orange)}
+.foot-note{color:var(--muted);font-size:13px}
+
+/* MARQUEE */
+.marquee-wrap{overflow:hidden;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:14px 0;background:var(--surface)}
+.marquee-track{display:flex;gap:40px;width:max-content;animation:marquee 20s linear infinite}
+@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.marquee-item{font-family:var(--font-head);font-size:20px;letter-spacing:3px;color:#333;text-transform:uppercase;white-space:nowrap}
+.marquee-item span{color:var(--orange)}
+
+/* Animated entrance */
+@keyframes fadeUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+.hero-tag{animation:fadeUp .6s ease both}
+.hero h1{animation:fadeUp .6s .1s ease both}
+.hero p{animation:fadeUp .6s .2s ease both}
+.hero-cta{animation:fadeUp .6s .3s ease both}
+.stats-bar{animation:fadeUp .6s .4s ease both}
+
+@media(max-width:768px){
+  nav{padding:16px 20px}
+  .section,.how-section{padding:60px 20px}
+  .stats-bar{flex-direction:column;max-width:280px}
+  .stat{border-right:none;border-bottom:1px solid var(--border)}
+  .stat:last-child{border-bottom:none}
+  footer{padding:32px 20px}
+  .step-num::after{display:none}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">SHORTS<span>AI</span></div>
+  <a href="/dashboard" class="nav-btn">Create Video →</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-tag">
+    <span>●</span> 100% Free · No Login · Powered by AI
+  </div>
+  <h1>
+    Create Viral<br/>
+    <span class="line2">AI Shorts</span><br/>
+    In Minutes
+  </h1>
+  <p>Turn any topic into a fully edited faceless YouTube Short — with AI voiceover, stunning visuals, and auto-captions. Zero editing skills needed.</p>
+  <div class="hero-cta">
+    <a href="/dashboard" class="btn-primary">🎬 Generate Free Video</a>
+    <a href="#how" class="btn-ghost">See how it works ↓</a>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat">
+      <div class="stat-num">100%</div>
+      <div class="stat-label">Free to use</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">&lt;3m</div>
+      <div class="stat-label">Generation time</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">9:16</div>
+      <div class="stat-label">Shorts ready</div>
+    </div>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee-wrap">
+  <div class="marquee-track">
+    <span class="marquee-item">AI <span>Script</span> Writer</span>
+    <span class="marquee-item">·</span>
+    <span class="marquee-item">Free <span>Image</span> Generator</span>
+    <span class="marquee-item">·</span>
+    <span class="marquee-item">AI <span>Voiceover</span></span>
+    <span class="marquee-item">·</span>
+    <span class="marquee-item">Auto <span>Captions</span></span>
+    <span class="marquee-item">·</span>
+    <span class="marquee-item">Instant <span>Download</span></span>
+    <span class="marquee-item">·</span>
+    <span class="marquee-item">AI <span>Script</span> Writer</span>
+    <span class="marquee-item">·</span>
+    <span class="marquee-item">Free <span>Image</span> Generator</span>
+    <span class="marquee-item">·</span>
+    <span class="marquee-item">AI <span>Voiceover</span></span>
+    <span class="marquee-item">·</span>
+    <span class="marquee-item">Auto <span>Captions</span></span>
+    <span class="marquee-item">·</span>
+    <span class="marquee-item">Instant <span>Download</span></span>
+    <span class="marquee-item">·</span>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<div class="section">
+  <div class="section-tag">What you get</div>
+  <div class="section-title">Everything<br/>Built In</div>
+  <p class="section-sub">All the tools autoshorts.ai charges $49/month for — completely free.</p>
+
+  <div class="features-grid">
+    <div class="feature-card">
+      <span class="feat-icon">🤖</span>
+      <div class="feat-title">AI Script Writer</div>
+      <p class="feat-desc">DeepSeek R1 writes viral hooks, punchy narration, and scene breakdowns for your niche.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feat-icon">🎨</span>
+      <div class="feat-title">Scene Image Gen</div>
+      <p class="feat-desc">Pollinations AI generates cinematic, high-resolution images for every scene — no API key.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feat-icon">🎙️</span>
+      <div class="feat-title">AI Voiceover</div>
+      <p class="feat-desc">6 premium voices (male, female, deep, energetic, soft, British) via Microsoft Edge TTS.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feat-icon">📝</span>
+      <div class="feat-title">Auto Captions</div>
+      <p class="feat-desc">Subtitles are automatically synced and burned into your video, TikTok style.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feat-icon">📱</span>
+      <div class="feat-title">9:16 & 16:9</div>
+      <p class="feat-desc">Generate vertical Shorts (9:16) or landscape YouTube videos (16:9) with one click.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feat-icon">⚡</span>
+      <div class="feat-title">Fast Pipeline</div>
+      <p class="feat-desc">Script → Images → Voiceover → Video assembled in under 3 minutes, start to finish.</p>
+    </div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<div class="how-section" id="how">
+  <div class="how-inner">
+    <div class="section-tag">Simple process</div>
+    <div class="section-title">3 Steps<br/>to Viral</div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-title">Fill the Form</div>
+        <p class="step-desc">Enter your topic or write your own script. Pick niche, tone, voice, and length.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-title">AI Builds It</div>
+        <p class="step-desc">AI writes the script, generates scenes, creates voiceover, and assembles the video.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-title">Download & Post</div>
+        <p class="step-desc">Preview your video in the browser, then download the MP4 and post anywhere.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NICHES -->
+<div class="section">
+  <div class="section-tag">Supported niches</div>
+  <div class="section-title">Every<br/>Niche Covered</div>
+  <div class="niches-row">
+    <div class="niche-pill">⚡ Tech</div>
+    <div class="niche-pill">💰 Finance</div>
+    <div class="niche-pill">👻 Horror</div>
+    <div class="niche-pill">🔥 Motivation</div>
+    <div class="niche-pill">🧠 Facts</div>
+    <div class="niche-pill">📜 History</div>
+    <div class="niche-pill">🔬 Science</div>
+    <div class="niche-pill">🎮 Gaming</div>
+    <div class="niche-pill">🌿 Nature</div>
+    <div class="niche-pill">🍕 Food</div>
+    <div class="niche-pill">+ Custom</div>
+  </div>
+</div>
+
+<!-- CTA BANNER -->
+<div style="background:linear-gradient(135deg,#FF6B1A18,#F5A62310);border-top:1px solid #FF6B1A33;border-bottom:1px solid #FF6B1A33;padding:80px 48px;text-align:center">
+  <div style="font-family:var(--font-head);font-size:clamp(36px,6vw,72px);text-transform:uppercase;margin-bottom:16px">
+    Start Creating <span style="color:var(--orange)">Now</span>
+  </div>
+  <p style="color:var(--muted);margin-bottom:36px;font-size:17px">No signup. No credit card. Just results.</p>
+  <a href="/dashboard" class="btn-primary" style="font-size:18px;padding:18px 48px">🎬 Generate My First Video</a>
+</div>
+
+<footer>
+  <div class="foot-logo">SHORTS<span>AI</span></div>
+  <div class="foot-note">Built with ❤️ using AI, FFmpeg & Pollinations · 100% Free</div>
+</footer>
+
+</body>
+</html>
